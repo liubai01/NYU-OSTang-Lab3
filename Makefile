@@ -1,4 +1,4 @@
-CC=gcc
+CC=g++
 CFLAGS=-g -pedantic -Wall -Werror -Wextra
 SOURCEDIR = src
 BUILDDIR = build
