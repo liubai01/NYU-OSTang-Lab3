@@ -6,12 +6,13 @@ BufferPool::BufferPool(int nBuffer)
 	for (int i = 0; i < nBuffer; ++i)
 	{
 		pool.push_back( 
-			(char *) malloc( sizeof(char) * ( 8096 + 1 ) )
+			(char *) malloc( sizeof(char) * ( TASKMAXSIZE * 2 + 1 ) )
 		);
 		pool[i][0] = '\0';
 		freeIdx.push(i);
 	}
 	sem_init(&mutex, 0, 1);
+	sem_init(&bufferNum, 0, nBuffer);
 }
 
 BufferPool::~BufferPool()
@@ -24,6 +25,7 @@ BufferPool::~BufferPool()
 
 void BufferPool::GetBuffer(pTask r)
 {
+	sem_wait(&bufferNum);
 	sem_wait(&mutex);
 	int idx = freeIdx.front();
 	freeIdx.pop();
@@ -41,4 +43,5 @@ void BufferPool::FreeBuffer(pTask r)
 	task2buffer.erase(bufferIdx);
 	freeIdx.push(bufferIdx);
 	sem_post(&mutex);
+	sem_post(&bufferNum);
 }

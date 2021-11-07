@@ -56,13 +56,6 @@ int execTask(
                 cnt = 1;
             } else {
                 ++cnt;
-                // reset counter when reach 16
-                if (cnt == 16)
-                {
-                    printToResult();
-                    accChar = -1;
-                    cnt = 0;
-                }
             }
             if (++taskCnt == taskSize) 
             {

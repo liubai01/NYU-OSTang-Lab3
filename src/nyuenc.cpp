@@ -90,15 +90,6 @@ int main(int argc, char* argv[])
             t->taskFIdx = taskFIdx;
             t->taskFpos = taskFPos;
 
-/*            printf(
-                "task %d: fName[%s] taskSize[%d] taskFIdx[%d] taskFPos[%d]\n", 
-                t->taskIdx, 
-                argv[taskFIdx], 
-                t->taskSize, 
-                t->taskFIdx, 
-                t->taskFpos
-            );*/
-
             taskQ.enqueue(t);
             taskIdx++;
         }

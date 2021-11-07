@@ -1,28 +1,30 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "taskqueue.hpp"
 
+// work thread function
 void *worker(void *vargp)
 {
     Worker* w = (Worker *) vargp;
 
     while (1)
     {
-        // wait until taskQueue inform
+        // 1. wait until taskQueue inform
         sem_wait(&w->workerMutex);
         if(!w->keepRunning)
         {
             break;
         }
 
+        // 2. execuate and output task
         execTask(w->taskQ->argc, w->taskQ->argv, w->nowTask);
-        printf("task %d finished: %s\n", w->nowTask->taskIdx, w->nowTask->buffer);
-        // output TBD
-        w->taskQ->bufPool->FreeBuffer(w->nowTask);
-        delete w->nowTask;
+        // printf("task %d finished: %s\n", w->nowTask->taskIdx, w->nowTask->buffer);
+        w->taskQ->output(w->nowTask);
 
-        // idle and release the worker
+
+        // 3. idle and release the worker
         sem_wait(&w->taskQ->idleWorkerQMutex);
         w->taskQ->idleWorkerQ.push(w);
         if (--w->taskQ->activeWorkNum == 0)
@@ -31,7 +33,7 @@ void *worker(void *vargp)
         }
         sem_post(&w->taskQ->idleWorkerQMutex);
 
-        // idleWorkNum to unblock the taskQueue
+        // 4. idleWorkNum to unblock the taskQueue
         sem_post(&w->taskQ->idleWorkerNum);
     }
 }
@@ -42,26 +44,36 @@ Worker::Worker()
     keepRunning = true;
 }
 
-void Worker::AssignTask(pTask t)
+void Worker::ExecTask(pTask t)
 {
     nowTask = t;
-    sem_post(&workerMutex);
+    taskQ->bufPool->GetBuffer(t);
+    sem_post(&workerMutex); // unfreeze the task thread
 }
+
 
 TaskQueue::TaskQueue(int nJob, int argc, char* argv[])
 {
+    // record for execute
 	this->argc = argc;
 	this->argv = argv;
     this->nJob = nJob;
 
+    // output queue
+    sem_init(&outQMutex, 0, 1);
     taskLastIdx = -1;
     tailCnt = 0;
     activeWorkNum = 0;
 
-    bufPool = new BufferPool(nJob);
+    // 2x nJob here since output may not be in order
+    // could occupy more than nJob's memory
+    bufPool = new BufferPool(nJob * 2); 
 
+    // idleWorkerNum: let main thread freeze if there is no idle worker (assign new task)
     sem_init(&idleWorkerNum, 0, nJob);
+    // isWorking: let main thread wait if there is still works
     sem_init(&isWorking, 0, 1);
+    // idleWorkerQMutex: atmoic idleWorkerQueue
     sem_init(&idleWorkerQMutex, 0, 1);
 
     for (int i = 0; i < nJob; ++i)
@@ -89,11 +101,13 @@ TaskQueue::~TaskQueue()
     delete bufPool;
 }
 
-
 void TaskQueue::enqueue(pTask t)
 {
+    // wait if there is no idle worker
     sem_wait(&idleWorkerNum);
 
+    // enter crtical section for idleWorkerQ
+    // goal: get an idle worker
     sem_wait(&idleWorkerQMutex);
     Worker* w = this->idleWorkerQ.front();
     this->idleWorkerQ.pop();
@@ -102,13 +116,66 @@ void TaskQueue::enqueue(pTask t)
         sem_wait(&isWorking);
     }
     sem_post(&idleWorkerQMutex);
+    // leave crtical section for idleWorkerQ
 
-    bufPool->GetBuffer(t);
-    w->AssignTask(t);
+    // assign task to the worker
+    w->ExecTask(t);
 }
+
+void TaskQueue::output(pTask t)
+{
+    sem_wait(&outQMutex);
+    outQ.push(t);
+    while(!outQ.empty() && outQ.top()->taskIdx == taskLastIdx + 1)
+    {
+        pTask tNow = outQ.top();
+        outQ.pop();
+
+        // stitch TBD
+        char* buf = tNow->buffer;
+        int lenBuf = strlen(buf);
+
+        char nowChar;
+        int nowCnt;
+        for (int i = 0; i < lenBuf; i += 2)
+        {
+            nowChar = buf[i];
+            nowCnt = buf[i + 1];
+
+
+            if (tailCnt == 0 || tailChar != nowChar)
+            {
+                if (tailCnt > 0)
+                {
+                    printf("%c%c", tailChar, tailCnt);
+                }
+                tailChar = nowChar;
+                tailCnt = nowCnt;
+            } else if (tailCnt == 0 ) {
+                tailChar = nowChar;
+                tailCnt = nowCnt;
+            } else {
+                tailCnt += nowCnt;
+            }
+        }
+
+
+        bufPool->FreeBuffer(tNow);
+        delete tNow;
+        
+        ++taskLastIdx;
+    }
+    sem_post(&outQMutex);
+}
+
 
 void TaskQueue::flush()
 {
     sem_wait(&isWorking);
     sem_post(&isWorking);
+    // no thread is working here
+    if (tailCnt > 0)
+    {
+        printf("%c%c", tailChar, tailCnt);
+    }
 }

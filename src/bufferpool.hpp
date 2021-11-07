@@ -10,6 +10,7 @@
 class BufferPool
 {
     sem_t mutex;
+    sem_t bufferNum;
 public:
     BufferPool(int nBuffer);
     ~BufferPool();

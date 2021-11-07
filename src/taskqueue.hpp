@@ -25,10 +25,6 @@ public:
     char** argv;
     int nJob;
 
-    int taskLastIdx;
-    char tailChar;
-    int tailCnt;
-
     BufferPool* bufPool;
 
     // threadPool
@@ -40,13 +36,20 @@ public:
     sem_t isWorking; // wait until all workers finished
     int activeWorkNum;
 
-    // priority queue for output
+    // output queue
+    sem_t outQMutex;
     std::priority_queue<pTask, std::vector<pTask>, Compare> outQ;
+    int taskLastIdx;
+    char tailChar;
+    int tailCnt;
 
     TaskQueue(int nJob, int argc, char* argv[]);
     ~TaskQueue();
 
+    // enqueue task to exectute
     void enqueue(pTask t);
+    // enqueue task to outputQueue and print anything if avaliable
+    void output(pTask t);
     void flush();
 };
 
@@ -58,7 +61,7 @@ public:
     bool keepRunning;
 
     Worker();
-    void AssignTask(pTask t);
+    void ExecTask(pTask t);
 
     pthread_t idx;
     TaskQueue* taskQ;
