@@ -21,6 +21,7 @@ clean:
 	rm -f *.o nyuenc
 	rm -f $(BUILDDIR)/*.o
 	rm -f nyuenc-yx2412.tar.xz
+	rm -f *.txt
 
 package:
 	tar cJf nyuenc-yx2412.tar.xz Makefile build/DONOTREMOVEDIR src
