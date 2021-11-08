@@ -36,6 +36,8 @@ void *worker(void *vargp)
         // 4. idleWorkNum to unblock the taskQueue
         sem_post(&w->taskQ->idleWorkerNum);
     }
+
+    return NULL;
 }
 
 Worker::Worker()
@@ -131,17 +133,59 @@ void TaskQueue::output(pTask t)
         pTask tNow = outQ.top();
         outQ.pop();
 
-        // stitch TBD
         char* buf = tNow->buffer;
         int lenBuf = strlen(buf);
-
         char nowChar;
         int nowCnt;
-        for (int i = 0; i < lenBuf; i += 2)
+
+        // output and stitch
+        if (tailCnt == 0) 
+        // no previous output, directly output and enqueue last char
+        {
+            tailChar = buf[lenBuf - 2];
+            tailCnt = buf[lenBuf - 1];
+            buf[lenBuf - 2] = '\0';
+            printf("%s", buf);
+        } else {
+            char nowChar = buf[0];
+            int nowCnt = buf[1];
+            buf = buf + 2;
+            lenBuf -= 2;
+            if (tailChar != nowChar)
+            // tail not match, output tail and output the rest of them
+            {
+                printf("%c%c", tailChar, tailCnt);
+                printf("%c%c", nowChar, nowCnt);
+                // enqueue&remove tail
+                if (lenBuf > 0)
+                {
+                    tailChar = buf[lenBuf - 2];
+                    tailCnt = buf[lenBuf - 1];
+                    buf[lenBuf - 2] = '\0';
+                    printf("%s", buf);
+                }
+
+            } else {
+                // tail match, update tail according to first char
+                tailCnt += nowCnt;
+                if (lenBuf > 0)
+                {
+                    printf("%c%c", tailChar, tailCnt);
+                    // enqueue&remove tail
+                    tailChar = buf[lenBuf - 2];
+                    tailCnt = buf[lenBuf - 1];
+                    buf[lenBuf - 2] = '\0';
+                    // omit first char and output the rest
+                    printf("%s", buf);
+                }
+                
+            }
+        }
+
+/*        for (int i = 0; i < lenBuf; i += 2)
         {
             nowChar = buf[i];
             nowCnt = buf[i + 1];
-
 
             if (tailCnt == 0 || tailChar != nowChar)
             {
@@ -157,7 +201,7 @@ void TaskQueue::output(pTask t)
             } else {
                 tailCnt += nowCnt;
             }
-        }
+        }*/
 
 
         bufPool->FreeBuffer(tNow);
