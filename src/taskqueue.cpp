@@ -147,8 +147,8 @@ void TaskQueue::output(pTask t)
             buf[lenBuf - 2] = '\0';
             printf("%s", buf);
         } else {
-            char nowChar = buf[0];
-            int nowCnt = buf[1];
+            nowChar = buf[0];
+            nowCnt = buf[1];
             buf = buf + 2;
             lenBuf -= 2;
             if (tailChar != nowChar)
@@ -181,27 +181,6 @@ void TaskQueue::output(pTask t)
                 
             }
         }
-
-/*        for (int i = 0; i < lenBuf; i += 2)
-        {
-            nowChar = buf[i];
-            nowCnt = buf[i + 1];
-
-            if (tailCnt == 0 || tailChar != nowChar)
-            {
-                if (tailCnt > 0)
-                {
-                    printf("%c%c", tailChar, tailCnt);
-                }
-                tailChar = nowChar;
-                tailCnt = nowCnt;
-            } else if (tailCnt == 0 ) {
-                tailChar = nowChar;
-                tailCnt = nowCnt;
-            } else {
-                tailCnt += nowCnt;
-            }
-        }*/
 
 
         bufPool->FreeBuffer(tNow);

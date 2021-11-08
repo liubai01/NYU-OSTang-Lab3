@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-g -pedantic -pthread # -Wall -Werror -Wextra
+CFLAGS=-g -pedantic -pthread -Wall -Werror -Wextra
 SOURCEDIR = src
 BUILDDIR = build
 OBJECTS = utils task taskqueue bufferpool
@@ -16,7 +16,11 @@ nyuenc.o: $(SOURCEDIR)/nyuenc.cpp
 %.o: $(SOURCEDIR)/%.cpp $(SOURCEDIR)/%.hpp
 	$(CC) -c -o $(BUILDDIR)/$@ $< $(CFLAGS)
 
-.PHONY: clean
+.PHONY: clean pacakge
 clean:
 	rm -f *.o nyuenc
 	rm -f $(BUILDDIR)/*.o
+	rm -f nyuenc-yx2412.tar.xz
+
+package:
+	tar cJf nyuenc-yx2412.tar.xz Makefile build/DONOTREMOVEDIR src
