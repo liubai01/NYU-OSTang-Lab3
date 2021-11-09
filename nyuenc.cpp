@@ -9,34 +9,24 @@
 
 int main(int argc, char* argv[])
 {
-    // parse parameters
-    int njob = 0;
-    char c;
-    while ((c = getopt (argc, argv, "j:")) != -1)
+    // Parse parameters
+    int njob = parseNJob(argc, argv);
+
+    if (njob < 0)
     {
-        switch (c)
-        {
-            case 'j':
-                njob = atoi(optarg);
-                break;
-            case ':':
-                printf("option needs a value\n"); 
-                break; 
-            case '?':
-                printf("unknown option: %c\n", optopt);
-                break; 
-        }
+        return 1;
     }
 
     TaskQueue taskQ(njob, argc, argv);
 
-    // sequential version
+    // Sequential Version
     if (njob == 0 || njob == 1)
     {
         return seq(optind, argc, argv);
     }
 
-    // Construct tasks
+    // Parallel Version
+    // -> Dispatch tasks
     int taskIdx = 0; // the index for task, from 0 to taskNum
     int taskSize = 0; // the size of current task
     int taskFIdx = 0; // the file name index for the start of the task
@@ -60,7 +50,7 @@ int main(int argc, char* argv[])
         }
 
         // try allocate until reach maxsize
-        while (taskSize < TASKMAXSIZE)
+        while (taskSize < PGSIZE)
         {
             // if curret file has been allocated
             if (!fileRestSize)
@@ -76,11 +66,11 @@ int main(int argc, char* argv[])
             }
 
             // allocate size
-            if (fileRestSize + taskSize > TASKMAXSIZE)
+            if (fileRestSize + taskSize > PGSIZE)
             {
-                fileRestSize -= TASKMAXSIZE - taskSize;
-                filePos += TASKMAXSIZE - taskSize;
-                taskSize = TASKMAXSIZE;
+                fileRestSize -= PGSIZE - taskSize;
+                filePos += PGSIZE - taskSize;
+                taskSize = PGSIZE;
                 break;
             } else {
                 taskSize += fileRestSize;
@@ -96,12 +86,12 @@ int main(int argc, char* argv[])
             t->taskFIdx = taskFIdx;
             t->taskFpos = taskFPos;
 
-            taskQ.enqueue(t);
+            taskQ.Enqueue(t);
             taskIdx++;
         }
 
     }
-    taskQ.flush();
+    taskQ.Flush();
 
     return 0;
     

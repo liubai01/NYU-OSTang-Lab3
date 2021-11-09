@@ -20,7 +20,7 @@ void *worker(void *vargp)
 
         // 2. execuate and output task
         execTask(w->taskQ->argc, w->taskQ->argv, w->nowTask);
-        w->taskQ->output(w->nowTask);
+        w->taskQ->Output(w->nowTask);
 
         // 3. idle and release the worker
         sem_wait(&w->taskQ->idleWorkerQMutex);
@@ -38,10 +38,13 @@ void *worker(void *vargp)
     return NULL;
 }
 
-Worker::Worker()
+Worker::Worker(TaskQueue* taskQ)
 {
     sem_init(&workerMutex, 0, 0);
     keepRunning = true;
+    this->taskQ = taskQ;
+
+    pthread_create(&idx, NULL, worker, (void *) this);
 }
 
 void Worker::ExecTask(pTask t)
@@ -49,6 +52,13 @@ void Worker::ExecTask(pTask t)
     nowTask = t;
     taskQ->bufPool->GetBuffer(t);
     sem_post(&workerMutex); // unfreeze the task thread
+}
+
+void Worker::Kill()
+{
+    this->keepRunning = false;
+    sem_post(&this->workerMutex);
+    pthread_join(this->idx, NULL);
 }
 
 
@@ -78,12 +88,10 @@ TaskQueue::TaskQueue(int nJob, int argc, char* argv[])
 
     for (int i = 0; i < nJob; ++i)
     {
-        Worker* w = new Worker();
-        w->taskQ = this;
+        Worker* w = new Worker(this);
+
         this->workers.push_back(w);
         this->idleWorkerQ.push(w);
-
-        pthread_create(&w->idx, NULL, worker, (void *) w);
     }
     
     
@@ -93,15 +101,13 @@ TaskQueue::~TaskQueue()
 {
     for (int i = 0; i < nJob; ++i)
     {
-        workers[i]->keepRunning = false;
-        sem_post(&workers[i]->workerMutex);
-        pthread_join(workers[i]->idx, NULL);
+        workers[i]->Kill();
         delete workers[i];
     }
     delete bufPool;
 }
 
-void TaskQueue::enqueue(pTask t)
+void TaskQueue::Enqueue(pTask t)
 {
     // wait if there is no idle worker
     sem_wait(&idleWorkerNum);
@@ -122,10 +128,11 @@ void TaskQueue::enqueue(pTask t)
     w->ExecTask(t);
 }
 
-void TaskQueue::output(pTask t)
+void TaskQueue::Output(pTask t)
 {
     sem_wait(&outQMutex);
     outQ.push(t);
+    // if task output is contigous, output latest task
     while(!outQ.empty() && outQ.top()->taskIdx == taskLastIdx + 1)
     {
         pTask tNow = outQ.top();
@@ -192,7 +199,7 @@ void TaskQueue::output(pTask t)
 }
 
 
-void TaskQueue::flush()
+void TaskQueue::Flush()
 {
     sem_wait(&isWorking);
     sem_post(&isWorking);

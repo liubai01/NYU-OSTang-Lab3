@@ -6,7 +6,7 @@ BufferPool::BufferPool(int nBuffer)
 	for (int i = 0; i < nBuffer; ++i)
 	{
 		pool.push_back( 
-			(char *) malloc( sizeof(char) * ( TASKMAXSIZE * 2 + 1 ) )
+			(char *) malloc( sizeof(char) * ( PGSIZE * 2 + 1 ) )
 		);
 		pool[i][0] = '\0';
 		freeIdx.push(i);

@@ -47,10 +47,10 @@ public:
     ~TaskQueue();
 
     // enqueue task to exectute
-    void enqueue(pTask t);
+    void Enqueue(pTask t);
     // enqueue task to outputQueue and print anything if avaliable
-    void output(pTask t);
-    void flush();
+    void Output(pTask t);
+    void Flush();
 };
 
 class Worker
@@ -60,8 +60,10 @@ public:
     pTask nowTask;
     bool keepRunning;
 
-    Worker();
+    Worker(TaskQueue* taskQ);
+
     void ExecTask(pTask t);
+    void Kill();
 
     pthread_t idx;
     TaskQueue* taskQ;

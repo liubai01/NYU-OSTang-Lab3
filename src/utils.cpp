@@ -3,7 +3,32 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+#include <unistd.h>
+
+int parseNJob(int argc, char* argv[])
+{
+    char c;
+    int njob = 0;
+    while ((c = getopt (argc, argv, "j:")) != -1)
+    {
+        switch (c)
+        {
+            case 'j':
+                njob = atoi(optarg);
+                break;
+            case ':':
+            // requires an option
+                return -1;
+                break; 
+            case '?':
+            // unknown option
+                return -1;
+                break; 
+        }
+    }
+
+    return njob;
+}
 
 int getFileSize(const char* fileName)
 {
@@ -33,7 +58,6 @@ int seq(int start, int end, char** argv)
 
     char* f; // for mmap
     int fileSize;
-    auto pgsize = sysconf(_SC_PAGE_SIZE);
 
     for (int fidx = start; fidx < end; ++fidx)
     {
@@ -43,9 +67,9 @@ int seq(int start, int end, char** argv)
         fileSize = getFileSize(fd);
 
         size_t readLen = 0;
-        for (off_t readStart = 0; readStart < fileSize; readStart += pgsize)
+        for (off_t readStart = 0; readStart < fileSize; readStart += PGSIZE)
         {
-            readLen = readStart + pgsize > fileSize ? fileSize - readStart : pgsize;
+            readLen = readStart + PGSIZE > fileSize ? fileSize - readStart : PGSIZE;
 
             f = (char *) mmap (0, readLen, PROT_READ, MAP_PRIVATE, fd, readStart);
 
@@ -63,8 +87,6 @@ int seq(int start, int end, char** argv)
                 }
             }
         }
-
-
 
         close(fd);
     }

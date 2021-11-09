@@ -2,6 +2,7 @@
 #define BUFFERPOOL_H
 
 #include "task.hpp"
+#include "utils.hpp"
 #include <queue>
 #include <vector>
 #include <unordered_map>

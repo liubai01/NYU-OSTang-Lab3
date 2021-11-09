@@ -2,7 +2,6 @@
 #define TASK_H
 
 #define INFINITE -1
-#define TASKMAXSIZE 4096
 
 #define OUTFORMAT "%c%c"
 // #define OUTFORMAT "[%c %d] " // for debug
