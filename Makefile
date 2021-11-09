@@ -10,18 +10,31 @@ all: nyuenc
 nyuenc: nyuenc.o $(addsuffix .o, $(OBJECTS))
 	$(CC) -o $@ $(addprefix $(BUILDDIR)/,$^) $(CFLAGS)
 
-nyuenc.o: $(SOURCEDIR)/nyuenc.cpp
+nyuenc.o: nyuenc.cpp
 	$(CC) -c -o $(BUILDDIR)/$@ $< $(CFLAGS)
 
 %.o: $(SOURCEDIR)/%.cpp $(SOURCEDIR)/%.hpp
 	$(CC) -c -o $(BUILDDIR)/$@ $< $(CFLAGS)
 
-.PHONY: clean pacakge
+.PHONY: clean pacakge grade
 clean:
 	rm -f *.o nyuenc
 	rm -f $(BUILDDIR)/*.o
 	rm -f nyuenc-yx2412.tar.xz
 	rm -f *.txt
+	rm -f grading/nyuenc-yx2412.tar.xz
+	rm -f grading/nyuenc
+	rm -f grading/nyuenc.cpp
+	rm -f grading/Makefile
+	rm -rf grading/myoutputs
+	rm -rf grading/src/*.cpp
+	rm -rf grading/src/*.hpp
+	rm -rf grading/build
+	cd ..
 
 package:
-	tar cJf nyuenc-yx2412.tar.xz Makefile build/DONOTREMOVEDIR src
+	tar cJf nyuenc-yx2412.tar.xz Makefile build/DONOTREMOVEDIR src nyuenc.cpp
+
+grade:
+	tar cJf grading/nyuenc-yx2412.tar.xz Makefile build/DONOTREMOVEDIR src nyuenc.cpp
+	cd grading && bash ./autograder.sh && cd ..

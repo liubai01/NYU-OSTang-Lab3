@@ -161,6 +161,8 @@ void TaskQueue::output(pTask t)
                     tailCnt = buf[lenBuf - 1];
                     buf[lenBuf - 2] = '\0';
                     printf("%s", buf);
+                } else {
+                    tailCnt = 0;
                 }
 
             } else {
@@ -195,7 +197,7 @@ void TaskQueue::flush()
     sem_wait(&isWorking);
     sem_post(&isWorking);
     // no thread is working here
-    if (tailCnt > 0)
+    if (tailCnt != 0)
     {
         printf("%c%c", tailChar, tailCnt);
     }
