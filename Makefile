@@ -16,7 +16,7 @@ nyuenc.o: nyuenc.cpp
 %.o: $(SOURCEDIR)/%.cpp $(SOURCEDIR)/%.hpp
 	$(CC) -c -o $(BUILDDIR)/$@ $< $(CFLAGS)
 
-.PHONY: clean pacakge grade
+.PHONY: clean pacakge grade profile
 clean:
 	rm -f *.o nyuenc
 	rm -f $(BUILDDIR)/*.o
@@ -42,3 +42,7 @@ grade:
 time:
 	time --portability ./nyuenc grading/inputs/5.in > /dev/null
 	time --portability ./nyuenc -j5 grading/inputs/5.in > /dev/null
+
+profile:
+	sudo perf record -g -- ./nyuenc -j3 grading/inputs/5.in > /dev/null
+	sudo perf script | c++filt | gprof2dot -f perf | dot -Tpng -o output.png

@@ -7,6 +7,17 @@
 #include <fcntl.h>
 
 #include "task.hpp"
+#include "utils.hpp"
+
+Task::Task()
+{
+    buffer = (char *) malloc( sizeof(char) * ( PGSIZE * 2 + 1 ) );
+}
+
+Task::~Task()
+{
+    free(buffer);
+}
 
 void Task::Exec()
 {

@@ -51,7 +51,7 @@ Worker::Worker(TaskQueue* taskQ)
 void Worker::ExecTask(Task* t)
 {
     nowTask = t;
-    taskQ->bufPool->GetBuffer(t);
+    // taskQ->bufPool->GetBuffer(t);
     sem_post(&workerMutex); // unfreeze the task thread
 }
 
@@ -76,7 +76,7 @@ TaskQueue::TaskQueue(int nJob)
 
     // 2x nJob here since output may not be in order
     // could occupy more than nJob's memory
-    bufPool = new BufferPool(nJob * 4); 
+    // bufPool = new BufferPool(nJob * 4); 
 
     // idleWorkerNum: let main thread freeze if there is no idle worker (assign new task)
     sem_init(&idleWorkerNum, 0, nJob);
@@ -103,7 +103,7 @@ TaskQueue::~TaskQueue()
         workers[i]->Kill();
         delete workers[i];
     }
-    delete bufPool;
+    // delete bufPool;
 }
 
 void TaskQueue::Enqueue(Task* t)
@@ -187,7 +187,6 @@ void TaskQueue::Output(Task* t)
                 
             }
         }
-        bufPool->FreeBuffer(tNow);
         delete tNow;
         
         ++taskLastIdx;

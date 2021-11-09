@@ -15,6 +15,9 @@ public:
     char* fmmap; // pointer to the mmap file
 
     void Exec();
+
+    Task();
+    ~Task();
 };
 
 
