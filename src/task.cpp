@@ -1,75 +1,48 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "task.hpp"
 
-int execTask(
-    int argc, 
-    char* argv[], 
-    pTask out)
+void Task::Exec()
 {
-    int taskFIdx = out->taskFIdx;
-    int taskFpos = out->taskFpos;
-    int taskSize = out->taskSize;
-
-    FILE *fp = NULL;
-    char c;
+    char c; // for char by char reading
     int accChar = -1; // accmulated character
     int cnt = 0; // counter of occurence of character
     int outBufferOffset = 0;
 
-    int taskCnt = 0; // halt when exceed
-    int isRunning = 1;
-    int fidx; // pointer to current fidx
-
-    auto printToResult = [&] () {
-        outBufferOffset += sprintf(
-            out->buffer + outBufferOffset, 
-            OUTFORMAT, 
-            accChar, cnt
-        );
- 
-    };
-
-    for (fidx = taskFIdx; fidx < argc && isRunning; ++fidx)
+    for (int i = 0; i < taskSize; ++i) 
     {
-        fp = fopen(argv[fidx], "r");
-        if (fidx == taskFIdx)
-        {
-             fseek(fp, taskFpos, SEEK_SET);  
-        }
-
-        if (!fp) {
-            printf("File %s not exists!", argv[fidx]);
-            return 1;
-        }
-        
-        // read character by character
-        while ((c = fgetc(fp)) != EOF)
-        {
-            if (accChar != c) {
-                if (cnt) {
-                    printToResult();
-                }
-                accChar = c;
-                cnt = 1;
-            } else {
-                ++cnt;
+        c = fmmap[i];
+        if (accChar != c) {
+            if (cnt != 0) {
+                outBufferOffset += sprintf(
+                    buffer + outBufferOffset, 
+                    OUTFORMAT, 
+                    accChar, cnt
+                );
             }
-            if (++taskCnt == taskSize) 
-            {
-                isRunning = 0;
-                break;
-            }
+            accChar = c;
+            cnt = 1;
+        } else {
+            ++cnt;
         }
-        fclose(fp);
     }
 
     // output the tail
-    if (cnt) {
-        printToResult();
+    if (cnt != 0)
+    {
+        outBufferOffset += sprintf(
+            buffer + outBufferOffset, 
+            OUTFORMAT, 
+            accChar, cnt
+        );
     }
 
-    return 0;
+    munmap(fmmap, taskSize);
+
 }

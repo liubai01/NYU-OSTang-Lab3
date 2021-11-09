@@ -19,7 +19,7 @@ void *worker(void *vargp)
         }
 
         // 2. execuate and output task
-        execTask(w->taskQ->argc, w->taskQ->argv, w->nowTask);
+        w->nowTask->Exec();
         w->taskQ->Output(w->nowTask);
 
         // 3. idle and release the worker
@@ -47,7 +47,7 @@ Worker::Worker(TaskQueue* taskQ)
     pthread_create(&idx, NULL, worker, (void *) this);
 }
 
-void Worker::ExecTask(pTask t)
+void Worker::ExecTask(Task* t)
 {
     nowTask = t;
     taskQ->bufPool->GetBuffer(t);
@@ -62,11 +62,9 @@ void Worker::Kill()
 }
 
 
-TaskQueue::TaskQueue(int nJob, int argc, char* argv[])
+TaskQueue::TaskQueue(int nJob)
 {
     // record for execute
-	this->argc = argc;
-	this->argv = argv;
     this->nJob = nJob;
 
     // output queue
@@ -107,7 +105,7 @@ TaskQueue::~TaskQueue()
     delete bufPool;
 }
 
-void TaskQueue::Enqueue(pTask t)
+void TaskQueue::Enqueue(Task* t)
 {
     // wait if there is no idle worker
     sem_wait(&idleWorkerNum);
@@ -128,14 +126,14 @@ void TaskQueue::Enqueue(pTask t)
     w->ExecTask(t);
 }
 
-void TaskQueue::Output(pTask t)
+void TaskQueue::Output(Task* t)
 {
     sem_wait(&outQMutex);
     outQ.push(t);
     // if task output is contigous, output latest task
     while(!outQ.empty() && outQ.top()->taskIdx == taskLastIdx + 1)
     {
-        pTask tNow = outQ.top();
+        Task* tNow = outQ.top();
         outQ.pop();
 
         char* buf = tNow->buffer;

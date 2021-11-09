@@ -23,22 +23,22 @@ BufferPool::~BufferPool()
 	}
 }
 
-void BufferPool::GetBuffer(pTask r)
+void BufferPool::GetBuffer(Task* t)
 {
 	sem_wait(&bufferNum);
 	sem_wait(&mutex);
 	int idx = freeIdx.front();
 	freeIdx.pop();
 
-	task2buffer[r->taskIdx] = idx;
-	r->buffer = pool[idx];
+	task2buffer[t->taskIdx] = idx;
+	t->buffer = pool[idx];
 	sem_post(&mutex);
 }
 
-void BufferPool::FreeBuffer(pTask r)
+void BufferPool::FreeBuffer(Task* t)
 {
 	sem_wait(&mutex);
-	int bufferIdx = task2buffer[r->taskIdx];
+	int bufferIdx = task2buffer[t->taskIdx];
 	pool[bufferIdx][0] = '\0';
 	task2buffer.erase(bufferIdx);
 	freeIdx.push(bufferIdx);

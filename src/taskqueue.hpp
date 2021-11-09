@@ -10,7 +10,7 @@
 class Compare
 {
 public:
-    bool operator() (pTask a, pTask b)
+    bool operator() (Task* a, Task* b)
     {
         return a->taskIdx > b->taskIdx;
     }
@@ -21,8 +21,6 @@ class Worker;
 class TaskQueue
 {
 public:
-    int argc;
-    char** argv;
     int nJob;
 
     BufferPool* bufPool;
@@ -38,18 +36,18 @@ public:
 
     // output queue
     sem_t outQMutex;
-    std::priority_queue<pTask, std::vector<pTask>, Compare> outQ;
+    std::priority_queue<Task*, std::vector<Task*>, Compare> outQ;
     int taskLastIdx;
     char tailChar;
     int tailCnt;
 
-    TaskQueue(int nJob, int argc, char* argv[]);
+    TaskQueue(int nJob);
     ~TaskQueue();
 
     // enqueue task to exectute
-    void Enqueue(pTask t);
+    void Enqueue(Task* t);
     // enqueue task to outputQueue and print anything if avaliable
-    void Output(pTask t);
+    void Output(Task* t);
     void Flush();
 };
 
@@ -57,12 +55,12 @@ class Worker
 {
 public:
     sem_t workerMutex;
-    pTask nowTask;
+    Task* nowTask;
     bool keepRunning;
 
     Worker(TaskQueue* taskQ);
 
-    void ExecTask(pTask t);
+    void ExecTask(Task* t);
     void Kill();
 
     pthread_t idx;

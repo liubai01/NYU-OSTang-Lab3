@@ -6,16 +6,17 @@
 #define OUTFORMAT "%c%c"
 // #define OUTFORMAT "[%c %d] " // for debug
 
-struct task {
+class Task {
+public:
     int taskIdx;
-    char* buffer;
-    int taskFIdx; 
-    int taskFpos; 
     int taskSize;
+
+    char* buffer;
+    char* fmmap; // pointer to the mmap file
+
+    void Exec();
 };
 
-typedef struct task* pTask;
 
-int execTask(int argc, char* argv[], pTask out);
 
 #endif

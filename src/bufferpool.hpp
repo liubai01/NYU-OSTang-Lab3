@@ -16,8 +16,8 @@ public:
     BufferPool(int nBuffer);
     ~BufferPool();
 
-    void GetBuffer(pTask r);
-    void FreeBuffer(pTask r);
+    void GetBuffer(Task* t);
+    void FreeBuffer(Task* t);
 
     int nBuffer;
     std::vector<char*> pool;

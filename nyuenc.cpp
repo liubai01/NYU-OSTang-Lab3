@@ -4,7 +4,11 @@
 #include "src/utils.hpp"
 #include "src/task.hpp"
 #include "src/taskqueue.hpp"
+
 #include <unistd.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 
 int main(int argc, char* argv[])
@@ -17,7 +21,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    TaskQueue taskQ(njob, argc, argv);
+    TaskQueue taskQ(njob);
 
     // Sequential Version
     if (njob == 0 || njob == 1)
@@ -28,69 +32,38 @@ int main(int argc, char* argv[])
     // Parallel Version
     // -> Dispatch tasks
     int taskIdx = 0; // the index for task, from 0 to taskNum
-    int taskSize = 0; // the size of current task
-    int taskFIdx = 0; // the file name index for the start of the task
-    int taskFPos = 0; // the file offset
+    
+    int fd;
+    char c; // for char by char reading
+    int accChar = -1; // accmulated character
+    int cnt = 0; // counter of occurence of character
 
-    int fidx = optind - 1;
-    int fileRestSize = 0;
-    int filePos = 0;
-    int isRunning = 1;
+    char* fmmap; // for mmap
+    int fileSize;
 
-    while (isRunning)
+    for (int fidx = optind; fidx < argc; ++fidx)
     {
-        taskSize = 0;
-        if (fileRestSize == 0)
+
+        fd = open(argv[fidx], O_RDONLY);
+        fileSize = getFileSize(fd);
+
+        size_t readLen = 0;
+        for (off_t readStart = 0; readStart < fileSize; readStart += PGSIZE)
         {
-            taskFIdx = fidx + 1;
-            taskFPos = 0;
-        } else {
-            taskFIdx = fidx;
-            taskFPos = filePos;
+            readLen = readStart + PGSIZE > fileSize ? fileSize - readStart : PGSIZE;
+
+            Task* task = new Task();
+            task->fmmap = (char *) mmap (0, readLen, PROT_READ, MAP_PRIVATE, fd, readStart);
+            task->taskIdx = taskIdx;
+            task->taskSize = readLen;
+            ++taskIdx;
+
+            taskQ.Enqueue(task);
         }
 
-        // try allocate until reach maxsize
-        while (taskSize < PGSIZE)
-        {
-            // if curret file has been allocated
-            if (!fileRestSize)
-            {
-                // try seek for new file for help
-                if (++fidx == argc)
-                {
-                    isRunning = 0;
-                    break;
-                }
-                fileRestSize = getFileSize(argv[fidx]);
-                filePos = 0;
-            }
-
-            // allocate size
-            if (fileRestSize + taskSize > PGSIZE)
-            {
-                fileRestSize -= PGSIZE - taskSize;
-                filePos += PGSIZE - taskSize;
-                taskSize = PGSIZE;
-                break;
-            } else {
-                taskSize += fileRestSize;
-                fileRestSize = 0;
-            }
-        }
-
-        if (taskSize)
-        {
-            pTask t = new struct task();
-            t->taskIdx = taskIdx;
-            t->taskSize = taskSize;
-            t->taskFIdx = taskFIdx;
-            t->taskFpos = taskFPos;
-
-            taskQ.Enqueue(t);
-            taskIdx++;
-        }
-
+        close(fd);
     }
+
     taskQ.Flush();
 
     return 0;

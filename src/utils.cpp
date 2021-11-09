@@ -41,7 +41,7 @@ int getFileSize(const char* fileName)
     return ret;
 }
 
-inline int getFileSize(int fd)
+int getFileSize(int fd)
 {
     struct stat s;
     fstat (fd, &s);
@@ -70,7 +70,6 @@ int seq(int start, int end, char** argv)
         for (off_t readStart = 0; readStart < fileSize; readStart += PGSIZE)
         {
             readLen = readStart + PGSIZE > fileSize ? fileSize - readStart : PGSIZE;
-
             f = (char *) mmap (0, readLen, PROT_READ, MAP_PRIVATE, fd, readStart);
 
             for (int i = 0; i < readLen; ++i) 
@@ -86,6 +85,7 @@ int seq(int start, int end, char** argv)
                     ++cnt;
                 }
             }
+            munmap(f, readLen);
         }
 
         close(fd);

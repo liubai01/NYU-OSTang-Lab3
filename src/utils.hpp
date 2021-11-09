@@ -9,6 +9,8 @@
 #define PGSIZE sysconf(_SC_PAGE_SIZE)
 
 int getFileSize(const char* fileName);
+int getFileSize(int fd);
+
 int seq(int start, int end, char** argv);
 int parseNJob(int argc, char* argv[]);
 
