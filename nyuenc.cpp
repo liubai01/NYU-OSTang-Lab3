@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
             readLen = readStart + PGSIZE > fileSize ? fileSize - readStart : PGSIZE;
 
             Task* task = new Task();
-            task->fmmap = (char *) mmap (0, readLen, PROT_READ, MAP_PRIVATE, fd, readStart);
+            task->fmmap = (char *) mmap (0, readLen, PROT_READ, MAP_PRIVATE | MAP_POPULATE, fd, readStart);
             task->taskIdx = taskIdx;
             task->taskSize = readLen;
             ++taskIdx;

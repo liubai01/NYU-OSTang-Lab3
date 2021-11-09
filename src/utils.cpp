@@ -85,7 +85,7 @@ int seq(int start, int end, char** argv)
                     ++cnt;
                 }
             }
-            munmap(f, readLen);
+            // munmap(f, readLen);
         }
 
         close(fd);

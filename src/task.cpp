@@ -43,6 +43,6 @@ void Task::Exec()
         );
     }
 
-    munmap(fmmap, taskSize);
+    // munmap(fmmap, taskSize);
 
 }
