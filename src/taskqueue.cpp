@@ -76,7 +76,7 @@ TaskQueue::TaskQueue(int nJob)
 
     // 2x nJob here since output may not be in order
     // could occupy more than nJob's memory
-    bufPool = new BufferPool(nJob * 2); 
+    bufPool = new BufferPool(nJob * 4); 
 
     // idleWorkerNum: let main thread freeze if there is no idle worker (assign new task)
     sem_init(&idleWorkerNum, 0, nJob);
