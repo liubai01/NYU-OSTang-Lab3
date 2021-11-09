@@ -11,6 +11,9 @@
 #include <sys/stat.h>
 
 
+#define handle_error(msg) \
+  do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
 int main(int argc, char* argv[])
 {
     // Parse parameters
@@ -23,6 +26,7 @@ int main(int argc, char* argv[])
 
     TaskQueue taskQ(njob);
 
+
     // Sequential Version
     if (njob == 0 || njob == 1)
     {
@@ -34,12 +38,8 @@ int main(int argc, char* argv[])
     int taskIdx = 0; // the index for task, from 0 to taskNum
     
     int fd;
-    char c; // for char by char reading
-    int accChar = -1; // accmulated character
-    int cnt = 0; // counter of occurence of character
-
-    char* fmmap; // for mmap
     int fileSize;
+    char* fmmap; // for mmap
 
     for (int fidx = optind; fidx < argc; ++fidx)
     {
@@ -47,13 +47,22 @@ int main(int argc, char* argv[])
         fd = open(argv[fidx], O_RDONLY);
         fileSize = getFileSize(fd);
 
+        // mmap once
+        fmmap = (char *) mmap (nullptr, fileSize, PROT_READ, MAP_PRIVATE | MAP_POPULATE, fd, 0);
+        if (fmmap == MAP_FAILED)
+        {
+            handle_error("mmap");
+        }
+
         size_t readLen = 0;
         for (off_t readStart = 0; readStart < fileSize; readStart += PGSIZE)
         {
             readLen = readStart + PGSIZE > fileSize ? fileSize - readStart : PGSIZE;
 
             Task* task = new Task();
-            task->fmmap = (char *) mmap (0, readLen, PROT_READ, MAP_PRIVATE | MAP_POPULATE, fd, readStart);
+            // mmap page by page (legacy with )
+            // fmmap = (char *) mmap (nullptr, readLen, PROT_READ, MAP_PRIVATE | MAP_POPULATE, fd, readStart);
+            task->fmmap = readStart + fmmap;
             task->taskIdx = taskIdx;
             task->taskSize = readLen;
             ++taskIdx;

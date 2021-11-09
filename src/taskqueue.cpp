@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 
 #include "taskqueue.hpp"
 
@@ -186,8 +187,6 @@ void TaskQueue::Output(Task* t)
                 
             }
         }
-
-
         bufPool->FreeBuffer(tNow);
         delete tNow;
         
