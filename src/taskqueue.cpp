@@ -20,9 +20,7 @@ void *worker(void *vargp)
 
         // 2. execuate and output task
         execTask(w->taskQ->argc, w->taskQ->argv, w->nowTask);
-        // printf("task %d finished: %s\n", w->nowTask->taskIdx, w->nowTask->buffer);
         w->taskQ->output(w->nowTask);
-
 
         // 3. idle and release the worker
         sem_wait(&w->taskQ->idleWorkerQMutex);
