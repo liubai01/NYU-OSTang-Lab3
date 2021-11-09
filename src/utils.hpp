@@ -6,5 +6,6 @@
 #include <unistd.h>
 
 int getFileSize(const char* fileName);
+int seq(int start, int end, char** argv);
 
 #endif

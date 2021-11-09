@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-g -pedantic -pthread -Wall -Werror -Wextra
+CFLAGS=-g -pedantic -pthread # -Wall -Werror -Wextra
 SOURCEDIR = src
 BUILDDIR = build
 OBJECTS = utils task taskqueue bufferpool
