@@ -38,3 +38,7 @@ package:
 grade:
 	tar cJf grading/nyuenc-yx2412.tar.xz Makefile build/DONOTREMOVEDIR src nyuenc.cpp
 	cd grading && bash ./autograder.sh && cd ..
+
+time:
+	time --portability ./nyuenc grading/inputs/5.in > /dev/null
+	time --portability ./nyuenc -j5 grading/inputs/5.in > /dev/null
