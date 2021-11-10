@@ -30,7 +30,10 @@ clean:
 	rm -rf grading/src/*.cpp
 	rm -rf grading/src/*.hpp
 	rm -rf grading/build
+	rm output.png
 	cd ..
+
+	
 
 package:
 	tar cJf nyuenc-yx2412.tar.xz Makefile build/DONOTREMOVEDIR src nyuenc.cpp
@@ -46,3 +49,5 @@ time:
 profile:
 	sudo perf record -g -- ./nyuenc -j3 grading/inputs/5.in > /dev/null
 	sudo perf script | c++filt | gprof2dot -f perf | dot -Tpng -o output.png
+	rm -f perf.data
+	rm -f perf.data.old
